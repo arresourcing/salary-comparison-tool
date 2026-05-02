@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Resourcing – Salary Comparison</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Helvetica,Arial,sans-serif;background:#f2f2f2;color:#064a69;min-height:100vh}
+#summaryView{display:none}
+header{background:#064a69;padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+.hdr-left{color:#fff;font-size:18px;font-weight:300;letter-spacing:1px}
+.hdr-right{color:#54b8ea;font-size:13px;font-weight:300;letter-spacing:2px}
+.container{max-width:780px;margin:0 auto;padding:24px 18px 8px}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:#357a9e;padding:8px 14px;margin-bottom:20px;display:flex;align-items:center;gap:8px;margin-left:-22px;margin-right:-22px;margin-top:-22px;border-radius:6px 6px 0 0}
+.card{background:#fff;border-radius:6px;padding:22px;margin-bottom:22px;box-shadow:0 1px 4px rgba(6,74,105,.09)}
+.cand-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cand-field{margin-bottom:10px}
+.cand-field label{display:block;font-size:10px;font-weight:700;letter-spacing:.7px;color:#357a9e;margin-bottom:4px}
+.txt-input,.num-input{width:100%;padding:7px 10px;border:1px solid #cde8f5;border-radius:4px;font-size:13px;color:#064a69;font-family:Helvetica,Arial,sans-serif;background:#f9fdff;outline:none}
+.txt-input:focus,.num-input:focus{border-color:#54b8ea;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.col-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:6px 12px;border-radius:3px;margin-bottom:14px;display:inline-block}
+.badge-current{background:#357a9e;color:#fff}
+.badge-offered{background:#54b8ea;color:#fff}
+.field-label{display:block;font-size:10px;font-weight:700;letter-spacing:.8px;color:#469cc8;margin-bottom:5px;margin-top:12px}
+.slider-row{display:flex;align-items:center;gap:12px}
+input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:linear-gradient(to right,#54b8ea 0%,#54b8ea var(--pct,50%),#dde var(--pct,50%),#dde 100%);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:#064a69;border:2px solid #54b8ea;cursor:pointer}
+.sval{min-width:88px;text-align:right;font-size:15px;font-weight:700;color:#064a69}
+.benefit-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sal-sac-row{display:flex;align-items:center;gap:10px;margin-top:10px;cursor:pointer;user-select:none}
+.cb-box{width:16px;height:16px;border:2px solid #064a69;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;transition:background .15s}
+.cb-box.checked{background:#064a69}
+.cb-box.checked::after{content:'✓';color:#fff;font-size:10px;font-weight:900;line-height:1}
+.cb-label{font-size:10px;font-weight:700;letter-spacing:.8px;color:#469cc8}
+.benefits-note{font-size:9px;color:#aaa;font-style:italic;text-align:center;margin-top:14px;grid-column:1/-1;line-height:1.6}
+.r{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0f4f7;font-size:11px}
+.rk{font-weight:700;letter-spacing:.4px;color:#357a9e}
+.rv{font-size:13px;font-weight:700;color:#064a69}
+.r.hl{background:#eef8fd;padding:7px 8px;border-radius:3px;border:none;margin:1px 0}
+.r.tpkg{background:#cde8f5;padding:7px 8px;border-radius:3px;border:none;margin:1px 0}
+.r.total{background:#064a69;padding:10px;border-radius:4px;border:none;margin-top:8px}
+.r.total .rk{color:#54b8ea;font-size:10px;text-transform:uppercase}
+.r.total .rv{color:#fff;font-size:15px}
+.sac-note{font-size:9px;color:#888;font-style:italic;margin-top:6px;line-height:1.5}
+.t{border-radius:6px;padding:8px 8px;text-align:center;display:flex;flex-direction:column}
+.t .val{font-size:13px;font-weight:700;margin-top:6px}
+.t-light{background:#cde8f5}.t-dark{background:#064a69}.t-muted{background:#ccd8df}.t-astral{background:#357a9e}
+.t .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;line-height:1.4;flex-grow:1}
+.t-light .lbl{color:#357a9e}.t-dark .lbl{color:#54b8ea}.t-muted .lbl{color:#5a7a8a}.t-astral .lbl{color:#cde8f5}
+.t .val{font-size:13px;font-weight:700;margin-top:10px}
+.t-dark .val.pos{color:#5dd08a}.t-dark .val.neg{color:#e07070}
+.t-light .val.pos,.t-muted .val.pos{color:#2a9d5c}
+.t-light .val.neg,.t-muted .val.neg{color:#c0392b}
+.t-astral .val{color:#fff}
+.diff-col-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#357a9e;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #cde8f5}
+.proj-controls{display:flex;align-items:center;gap:16px;margin-bottom:10px}
+.proj-controls label{font-size:10px;font-weight:700;letter-spacing:.8px;color:#469cc8}
+.chart-wrap{position:relative;height:260px;margin-bottom:18px}
+.proj-table{width:100%;border-collapse:collapse;font-size:11px}
+.proj-table th{background:#064a69;color:#54b8ea;padding:7px 10px;text-align:left;font-size:10px;letter-spacing:.8px}
+.proj-table td{padding:7px 10px;border-bottom:1px solid #f0f4f7;color:#064a69}
+.proj-table .cur{color:#357a9e;font-weight:700}.proj-table .off{color:#064a69;font-weight:700}
+.proj-table .dpos{color:#2a9d5c;font-weight:700}.proj-table .dneg{color:#c0392b;font-weight:700}
+.btn-row{text-align:center;margin-bottom:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{border:none;border-radius:4px;padding:11px 28px;font-size:12px;font-weight:700;letter-spacing:1.2px;cursor:pointer;font-family:Helvetica,Arial,sans-serif;text-transform:uppercase;width:280px;white-space:nowrap}
+.btn-dark{background:#064a69;color:#fff}.btn-dark:hover{background:#357a9e}
+.btn-mid{background:#54b8ea;color:#fff}.btn-mid:hover{background:#469cc8}
+.btn:disabled{background:#aaa;cursor:not-allowed}
+footer{text-align:center;font-size:12px;color:#555;font-style:italic;padding:10px 0 24px;line-height:2;max-width:780px;margin:0 auto}
+.sum-container{max-width:780px;margin:0 auto;padding:28px 18px}
+.sum-hero{background:#064a69;border-radius:8px;padding:14px 28px;margin-bottom:10px}
+.sum-hero .sum-narrative{color:#cde8f5;font-size:12px;margin-top:10px;line-height:1.5}
+.sum-hero .sum-name{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px}
+.sum-hero .sum-sub{color:#54b8ea;font-size:12px;letter-spacing:1px}
+.sum-hero .sum-narrative{color:#cde8f5;font-size:13px;margin-top:14px;line-height:1.7}
+.sum-proj{background:#fff;border-radius:6px;padding:16px 18px;box-shadow:0 1px 4px rgba(6,74,105,.09);margin-bottom:18px}
+.sum-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sum-col{padding:0 0 16px;border-bottom:1px solid #f0f4f7}
+.sum-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f4f7;font-size:11px}
+.sum-rk{color:#357a9e;font-weight:700;letter-spacing:.4px}
+.sum-rv{font-weight:700;color:#064a69}
+.sum-row.sum-total{background:#064a69;padding:6px 10px;border-radius:4px;border:none;margin-top:4px}
+.sum-row.sum-total .sum-rk{color:#54b8ea;font-size:10px;text-transform:uppercase}
+.sum-row.sum-total .sum-rv{color:#fff;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- MAIN APP -->
+<div id="appView">
+<header>
+  <div class="hdr-left">Salary Comparison</div>
+  <div class="hdr-right">AR Resourcing</div>
+</header>
+<div class="container">
+
+  <div class="card">
+    <div class="section-title">Candidate Details</div>
+    <div class="cand-grid">
+      <div>
+        <div class="cand-field"><label>Candidate Name</label><input class="txt-input" type="text" id="candName"></div>
+        <div class="cand-field"><label>Current Company</label><input class="txt-input" type="text" id="curCompany"></div>
+        <div class="cand-field"><label>Current Job Title</label><input class="txt-input" type="text" id="curTitle"></div>
+      </div>
+      <div>
+        <div class="cand-field" style="visibility:hidden"><label>.</label><input class="txt-input" type="text" disabled></div>
+        <div class="cand-field"><label>New Company</label><input class="txt-input" type="text" id="newCompany"></div>
+        <div class="cand-field"><label>New Job Title</label><input class="txt-input" type="text" id="newTitle"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Basic Salary</div>
+    <div class="grid2">
+      <div>
+        <div class="col-badge badge-current">Current</div>
+        <div class="slider-row"><input type="range" id="sliderA" min="50000" max="200000" step="500" value="100000"><div class="sval" id="valA">£100,000</div></div>
+      </div>
+      <div>
+        <div class="col-badge badge-offered">Offered</div>
+        <div class="slider-row"><input type="range" id="sliderB" min="50000" max="200000" step="500" value="110000"><div class="sval" id="valB">£110,000</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Benefits</div>
+    <div class="grid2">
+      <!-- Current -->
+      <div>
+        <div class="col-badge badge-current">Current</div>
+        <div class="benefit-row">
+          <div id="carAllowWrapA"><span class="field-label">Car Allowance (£)</span><input class="num-input" type="number" id="carA" value="6000" min="0" max="30000" step="500"></div>
+          <div id="sacWrapA" style="display:none"><span class="field-label">Annual Sacrifice (£)</span><input class="num-input" type="number" id="sacrificeA" value="6000" min="0" max="60000" step="500"></div>
+          <div><span class="field-label">Bonus % of Basic</span><input class="num-input" type="number" id="bonusA" value="10" min="0" max="100" step="1"></div>
+        </div>
+        <div class="benefit-row" style="margin-top:10px">
+          <div><span class="field-label">Employee Pension %</span><input class="num-input" type="number" id="empPenA" value="5" min="0" max="50" step="0.5"></div>
+          <div><span class="field-label">Employer Pension %</span><input class="num-input" type="number" id="erPenA" value="3" min="0" max="50" step="0.5"></div>
+        </div>
+        <div class="sal-sac-row" onclick="toggleCheck('salSacA')"><div class="cb-box" id="cb-salSacA"></div><span class="cb-label">Car Scheme Salary Sacrifice</span></div>
+        <div class="sal-sac-row" onclick="toggleCheck('penSacA')"><div class="cb-box" id="cb-penSacA"></div><span class="cb-label">Pension Salary Sacrifice</span></div>
+      </div>
+      <!-- Offered -->
+      <div>
+        <div class="col-badge badge-offered">Offered</div>
+        <div class="benefit-row">
+          <div id="carAllowWrapB"><span class="field-label">Car Allowance (£)</span><input class="num-input" type="number" id="carB" value="6000" min="0" max="30000" step="500"></div>
+          <div id="sacWrapB" style="display:none"><span class="field-label">Annual Sacrifice (£)</span><input class="num-input" type="number" id="sacrificeB" value="6000" min="0" max="60000" step="500"></div>
+          <div><span class="field-label">Bonus % of Basic</span><input class="num-input" type="number" id="bonusB" value="10" min="0" max="100" step="1"></div>
+        </div>
+        <div class="benefit-row" style="margin-top:10px">
+          <div><span class="field-label">Employee Pension %</span><input class="num-input" type="number" id="empPenB" value="5" min="0" max="50" step="0.5"></div>
+          <div><span class="field-label">Employer Pension %</span><input class="num-input" type="number" id="erPenB" value="3" min="0" max="50" step="0.5"></div>
+        </div>
+        <div class="sal-sac-row" onclick="toggleCheck('salSacB')"><div class="cb-box" id="cb-salSacB"></div><span class="cb-label">Car Scheme Salary Sacrifice</span></div>
+        <div class="sal-sac-row" onclick="toggleCheck('penSacB')"><div class="cb-box" id="cb-penSacB"></div><span class="cb-label">Pension Salary Sacrifice</span></div>
+      </div>
+      <div class="benefits-note">For further details about how car scheme and pension salary sacrifice adjustments are calculated, see the notes at the bottom of this document.</div>
+    </div>
+  </div>
+
+  <div class="card"><div class="section-title">Breakdown</div><div class="grid2"><div id="bdA"></div><div id="bdB"></div></div></div>
+  <div class="card"><div class="section-title">Take-Home Difference</div><div id="diffMain" style="display:grid;gap:18px"></div></div>
+  <div class="card"><div class="section-title">Percentage Difference</div><div id="pctMain" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div></div>
+  <div class="card">
+    <div class="section-title">5-Year Cumulative Take-Home Difference</div>
+    <div class="proj-controls" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px"><label>Annual Pay Rise %</label><input class="num-input" type="number" id="projRise" value="3" min="0" max="15" step="0.5" style="width:80px"></div>
+      <div class="sal-sac-row" style="margin:0" onclick="toggleCheck('showTakeHome')"><div class="cb-box checked" id="cb-showTakeHome"></div><span class="cb-label">Display in Candidate Summary</span></div>
+    </div>
+    <div class="chart-wrap"><canvas id="projChart"></canvas></div>
+    <table class="proj-table" id="projTable"></table>
+    <div id="proj5tile" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">5-Year Cumulative Pension Difference</div>
+    <div class="proj-controls" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px"><label>Annual Pay Rise %</label><input class="num-input" type="number" id="projRisePen" value="3" min="0" max="15" step="0.5" style="width:80px"></div>
+      <div class="sal-sac-row" style="margin:0" onclick="toggleCheck('showPension')"><div class="cb-box checked" id="cb-showPension"></div><span class="cb-label">Display in Candidate Summary</span></div>
+    </div>
+    <div class="chart-wrap"><canvas id="penChart"></canvas></div>
+    <table class="proj-table" id="penTable"></table>
+    <div id="pen5tile" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button class="btn btn-mid" onclick="showSummary()">&#128203; Candidate Summary</button>
+</div>
+<footer>Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
+Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.<br><br>
+Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.<br><br>
+<strong>Note for higher rate taxpayers:</strong> If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.</footer>
+</div>
+
+<!-- SUMMARY VIEW -->
+<div id="summaryView">
+<header><div class="hdr-left">Salary Comparison</div><div class="hdr-right">AR Resourcing</div></header>
+<div class="sum-container" id="summaryContent"></div>
+<div class="btn-row" style="padding-bottom:24px">
+  <button class="btn btn-dark" onclick="hideSummary()">&#8592; Back to Comparison</button>
+  <button class="btn btn-mid" id="sumPdfBtn" onclick="generateSummaryPDF()">&#8595; Download PDF</button>
+  <button class="btn btn-mid" onclick="showEmailModal()">&#9993; Create Email</button>
+</div>
+<footer>Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
+Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.<br><br>
+Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.<br><br>
+<strong>Note for higher rate taxpayers:</strong> If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.</footer>
+</div>
+
+<!-- EMAIL MODAL -->
+<div id="emailModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(6,74,105,0.7);z-index:1000;overflow-y:auto;">
+  <div style="max-width:640px;margin:40px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#064a69;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="color:#fff;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Email Draft</div>
+      <div style="color:#54b8ea;font-size:12px;font-weight:300;letter-spacing:2px;">AR Resourcing</div>
+    </div>
+    <div style="padding:24px;">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#357a9e;margin-bottom:6px;text-transform:uppercase;">Subject Line</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="emailSubject" style="flex:1;padding:10px 12px;background:#f9fdff;border:1px solid #cde8f5;border-radius:4px;font-size:13px;color:#064a69;font-family:Helvetica,Arial,sans-serif;"></div>
+          <button onclick="copySubject()" id="copySubjectBtn" style="border:none;background:#357a9e;color:#fff;padding:10px 14px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.8px;cursor:pointer;font-family:Helvetica,Arial,sans-serif;white-space:nowrap;">Copy Subject</button>
+        </div>
+        <div id="copySubjectConfirm" style="font-size:11px;color:#2a9d5c;font-weight:700;opacity:0;transition:opacity .4s;margin-top:6px;">Copied to clipboard</div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#357a9e;margin-bottom:6px;text-transform:uppercase;">Email Body</div>
+        <div id="emailBody" style="padding:16px;background:#f9fdff;border:1px solid #cde8f5;border-radius:4px;font-size:13px;color:#000000;font-family:Helvetica,Arial,sans-serif;line-height:1.7;"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+        <div id="copyConfirm" style="font-size:11px;color:#2a9d5c;font-weight:700;opacity:0;transition:opacity .4s;">Copied to clipboard</div>
+        <button onclick="closeEmailModal()" style="border:1px solid #cde8f5;background:#fff;color:#357a9e;padding:10px 20px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.8px;cursor:pointer;font-family:Helvetica,Arial,sans-serif;">Close</button>
+        <button onclick="copyEmailBody()" id="copyBodyBtn" style="border:none;background:#357a9e;color:#fff;padding:10px 24px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.8px;cursor:pointer;font-family:Helvetica,Arial,sans-serif;">Copy Email</button>
+      </div>
+      <div style="margin-top:16px;padding:10px 14px;background:#f2f2f2;border-radius:4px;font-size:10px;color:#888;font-style:italic;line-height:1.6;">
+        Paste into a new Outlook email using Ctrl+V. Bold and bullet formatting will be retained. Attach the PDF manually before sending.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var EV_P11D=40000, EV_BIK=0.04;
+var cs={salSacA:false,salSacB:false,penSacA:false,penSacB:false,showTakeHome:true,showPension:true};
+var sA={},sB={},projChart=null,sumChart=null;
+
+function f(n){return '£'+Math.round(Math.abs(+n||0)).toLocaleString('en-GB');}
+function sign(n){return (+n||0)>=0?'+':'−';}
+function cls(n){return (+n||0)>=0?'pos':'neg';}
+function gv(id){return parseFloat(document.getElementById(id).value)||0;}
+
+function toggleCheck(id){
+  cs[id]=!cs[id];
+  document.getElementById('cb-'+id).classList.toggle('checked',cs[id]);
+  if(id==='salSacA'||id==='salSacB'){
+    var s=id.slice(-1);
+    document.getElementById('carAllowWrap'+s).style.display=cs[id]?'none':'block';
+    document.getElementById('sacWrap'+s).style.display=cs[id]?'block':'none';
+  }
+  update();
+}
+
+function calcTax(g){
+  g=Math.max(0,g);
+  var pa=12570;
+  if(g>100000) pa=Math.max(0,12570-Math.floor((g-100000)/2));
+  var t=Math.max(0,g-pa);
+  if(g>=125140) return Math.round(37700*0.2+(125140-50270)*0.4+(g-125140)*0.45);
+  return Math.round(Math.min(t,37700)*0.2+(t>37700?(t-37700)*0.4:0));
+}
+function calcNI(g){
+  g=Math.max(0,g);
+  var ni=0;
+  if(g>12570) ni+=Math.min(g-12570,37700)*0.08;
+  if(g>50270) ni+=(g-50270)*0.02;
+  return ni;
+}
+function netPay(tg,bik){return tg-calcTax(tg)-calcNI(tg)-(bik||0);}
+
+function calc(basic,car,bonusPct,empPct,erPct,ss,annSac,penSac){
+  basic=Math.max(0,+basic||0);car=Math.max(0,+car||0);
+  bonusPct=Math.max(0,+bonusPct||0);empPct=Math.max(0,+empPct||0);
+  erPct=Math.max(0,+erPct||0);annSac=Math.max(0,+annSac||0);
+  var bonus=basic*bonusPct/100,empPen=basic*empPct/100,erPen=basic*erPct/100;
+  var tg,bik=0,carVal;
+  if(ss){tg=basic-annSac-empPen+bonus;bik=calcTax(tg+EV_P11D*EV_BIK)-calcTax(tg);carVal=annSac;}
+  else{tg=basic-empPen+bonus+car;carVal=car;}
+  var carSaving=0;
+  if(ss){
+    var bn=basic-empPen,tgSN=bn-annSac,tgCN=bn;
+    var bikN=calcTax(tgSN+EV_P11D*EV_BIK)-calcTax(tgSN);
+    carSaving=Math.round((calcTax(tgCN)-calcTax(tgSN)-bikN)+(calcNI(tgCN)-calcNI(tgSN)));
+  }
+  var penSaving=0;
+  if(penSac&&empPen>0) penSaving=Math.max(0,Math.round(calcNI(tg+empPen)-calcNI(tg)));
+  return{basic:basic,bonus:bonus,car:carVal,empPen:empPen,erPen:erPen,
+    tax:Math.round(calcTax(tg)+bik),ni:Math.round(calcNI(tg)),
+    takeHome:Math.round(netPay(tg,bik)),totalPkg:Math.round(basic+bonus+carVal+erPen),
+    ss:ss,penSac:penSac,carSaving:carSaving,penSaving:penSaving};
+}
+
+function tile(type,label,val,dv){
+  var v=dv!==undefined?dv:sign(val)+f(val);
+  return '<div class="t t-'+type+'"><div class="lbl">'+label+'</div><div class="val '+cls(val)+'">'+v+'</div></div>';
+}
+function diffGrid(pd,nd,td){
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">'
+    +tile('light','Total Package (Gross)',pd)
+    +tile('dark','Take-Home Pay (Net)',nd)
+    +tile('muted','Tax &amp; NI Paid',-td)+'</div>';
+}
+
+function renderBD(id,badge,css,d){
+  var cl=d.ss?'Sal. Sacrifice Car (Annual)':'Car Allowance';
+  var tl=d.ss?'Income Tax (inc. BiK)':'Income Tax';
+  var carRow=d.ss&&d.carSaving?'<div class="r"><span class="rk">Car Scheme Tax &amp; NI Saving</span><span class="rv" style="color:#2a9d5c">+ '+f(d.carSaving)+'</span></div>':'';
+  var penRow=d.penSac?'<div class="r"><span class="rk">Pension Tax &amp; NI Saving</span><span class="rv" style="color:#2a9d5c">+ '+f(d.penSaving)+'</span></div>':'';
+  var sacNote=d.ss?'<div class="sac-note">Car provided via salary sacrifice. Take-home is lower than a cash car allowance equivalent, but the car is provided in exchange.</div>':'';
+  document.getElementById(id).innerHTML=
+    '<div class="col-badge '+css+'" style="margin-bottom:12px">'+badge+'</div>'
+    +'<div class="r hl"><span class="rk">Basic Salary</span><span class="rv">'+f(d.basic)+'</span></div>'
+    +'<div class="r"><span class="rk">Bonus</span><span class="rv">'+f(d.bonus)+'</span></div>'
+    +'<div class="r"><span class="rk">'+cl+'</span><span class="rv">'+f(d.car)+'</span></div>'
+    +'<div class="r"><span class="rk">Employer Pension</span><span class="rv">'+f(d.erPen)+'</span></div>'
+    +'<div class="r tpkg"><span class="rk" style="color:#064a69">Total Package (Gross)</span><span class="rv" style="color:#064a69">'+f(d.totalPkg)+'</span></div>'
+    +'<div class="r" style="margin-top:6px"><span class="rk">Employee Pension</span><span class="rv">− '+f(d.empPen)+'</span></div>'
+    +'<div class="r"><span class="rk">'+tl+'</span><span class="rv">− '+f(d.tax)+'</span></div>'
+    +'<div class="r"><span class="rk">National Insurance</span><span class="rv">− '+f(d.ni)+'</span></div>'
+    +carRow+penRow
+    +'<div class="r total"><span class="rk">Take-Home Pay (Net)</span><span class="rv">'+f(d.takeHome)+'</span></div>'
+    +sacNote;
+}
+
+function renderDiff(a,b){
+  var pd=b.totalPkg-a.totalPkg,nd=b.takeHome-a.takeHome,td=(b.tax+b.ni)-(a.tax+a.ni);
+  document.getElementById('diffMain').innerHTML=
+    '<div><div class="diff-col-header">Annual Difference</div>'+diffGrid(pd,nd,td)+'</div>'
+    +'<div><div class="diff-col-header">Monthly Difference</div>'+diffGrid(pd/12,nd/12,td/12)+'</div>';
+}
+
+function renderPct(a,b){
+  var pb=((b.basic-a.basic)/a.basic)*100,pp=((b.totalPkg-a.totalPkg)/a.totalPkg)*100;
+  function fp(n){return (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';}
+  document.getElementById('pctMain').innerHTML=
+    tile('astral','Basic Salary',pb,fp(pb))+tile('astral','Total Package (Gross)',pp,fp(pp))+'<div></div>';
+}
+
+function getProj(d,rise,yrs){
+  var rows=[],cum=0;
+  for(var i=0;i<yrs;i++){
+    var m=Math.pow(1+rise/100,i);
+    var basic=d.basic*m,empPen=d.empPen*m,bonus=d.bonus*m,carM=d.car*m;
+    var tg,bik=0;
+    if(d.ss){tg=basic-carM-empPen+bonus;bik=calcTax(tg+EV_P11D*EV_BIK)-calcTax(tg);}
+    else tg=basic-empPen+bonus+carM;
+    var th=Math.round(netPay(tg,bik));
+    cum+=th;
+    rows.push({year:i+1,th:th,cumTH:Math.round(cum)});
+  }
+  return rows;
+}
+
+function makeLineChart(canvasId,pA,pB,existing){
+  if(existing) existing.destroy();
+  var diff=pA.map(function(r,i){return pB[i].cumTH-r.cumTH;});
+  return new Chart(document.getElementById(canvasId),{
+    type:'line',
+    data:{labels:pA.map(function(r){return 'Year '+r.year;}),datasets:[{
+      label:'Cumulative Difference',data:diff,
+      borderColor:'#54b8ea',backgroundColor:'rgba(84,184,234,0.12)',
+      borderWidth:2.5,pointBackgroundColor:'#064a69',pointBorderColor:'#54b8ea',
+      pointRadius:6,fill:true,tension:0.4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' Cumulative difference: '+f(c.raw);}}}},
+      scales:{
+        y:{ticks:{callback:function(v){return '£'+Math.round(v/1000)+'k';}},grid:{color:'rgba(0,0,0,0.05)'},
+          title:{display:true,text:'5-Year Cumulative Take-Home Difference',color:'#357a9e',font:{size:10,weight:'bold'}}},
+        x:{grid:{display:false}}
+      }
+    },
+    plugins:[{id:'lbl',afterDatasetsDraw:function(chart){
+      var ctx=chart.ctx,meta=chart.getDatasetMeta(0),lp=meta.data[4],val=chart.data.datasets[0].data[4];
+      ctx.save();ctx.font='bold 11px Helvetica';ctx.fillStyle='#54b8ea';ctx.textAlign='center';
+      ctx.fillText(sign(val)+f(val),lp.x,lp.y-14);ctx.restore();
+    }}]
+  });
+}
+
+function renderProj(a,b){
+  var rise=gv('projRise'),pA=getProj(a,rise,5),pB=getProj(b,rise,5);
+  projChart=makeLineChart('projChart',pA,pB,projChart);
+  var rows='<tr><th>Year</th><th>Current</th><th>Offered</th><th>Difference</th></tr>';
+  pA.forEach(function(rA,i){
+    var rB=pB[i],d=rB.th-rA.th;
+    rows+='<tr><td>Year '+rA.year+'</td><td class="cur">'+f(rA.th)+'</td><td class="off">'+f(rB.th)+'</td><td class="'+(d>=0?'dpos':'dneg')+'">'+sign(d)+f(d)+'</td></tr>';
+  });
+  document.getElementById('projTable').innerHTML=rows;
+  var cum5=pB[4].cumTH-pA[4].cumTH;
+  document.getElementById('proj5tile').innerHTML=
+    '<div class="t t-dark" style="text-align:center;padding:16px 14px">'
+    +'<div class="lbl" style="font-size:13px">5-Year Cumulative Take-Home Difference</div>'
+    +'<div class="val '+cls(cum5)+'">'+sign(cum5)+f(cum5)+'</div></div>'
+    +'<div style="font-size:10px;color:#888;font-style:italic;margin-top:8px;line-height:1.6">Note: Annual differences may vary year-on-year as salary growth moves earnings across Income Tax thresholds, particularly the £100,000–£125,140 Personal Allowance taper zone. The cumulative total reflects the full 5-year picture.</div>';
+}
+
+function trackFill(sl){sl.style.setProperty('--pct',((+sl.value-+sl.min)/(+sl.max-+sl.min)*100)+'%');}
+
+function getPensionProj(d,rise,yrs){
+  var rows=[],cumEmp=0,cumEr=0;
+  for(var i=0;i<yrs;i++){
+    var m=Math.pow(1+rise/100,i);
+    var empPen=Math.round(d.empPen*m);
+    var erPen=Math.round(d.erPen*m);
+    var combined=empPen+erPen;
+    cumEmp+=empPen; cumEr+=erPen;
+    rows.push({year:i+1,empPen:empPen,erPen:erPen,combined:combined,cumEmp:Math.round(cumEmp),cumEr:Math.round(cumEr),cumCombined:Math.round(cumEmp+cumEr)});
+  }
+  return rows;
+}
+
+function renderPensionProj(a,b){
+  var rise=gv('projRisePen');
+  var pA=getPensionProj(a,rise,5),pB=getPensionProj(b,rise,5);
+
+  // Chart — cumulative combined pension difference
+  if(window.penChartObj) window.penChartObj.destroy();
+  var diff=pA.map(function(r,i){return pB[i].cumCombined-r.cumCombined;});
+  window.penChartObj=new Chart(document.getElementById('penChart'),{
+    type:'line',
+    data:{labels:pA.map(function(r){return 'Year '+r.year;}),datasets:[{
+      label:'Cumulative Pension Difference',data:diff,
+      borderColor:'#357a9e',backgroundColor:'rgba(53,122,158,0.12)',
+      borderWidth:2.5,pointBackgroundColor:'#064a69',pointBorderColor:'#357a9e',
+      pointRadius:6,fill:true,tension:0.4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' Cumulative pension difference: +'+f(c.raw);}}}},
+      scales:{
+        y:{ticks:{callback:function(v){return '£'+Math.round(v/1000)+'k';}},grid:{color:'rgba(0,0,0,0.05)'},
+          title:{display:true,text:'5-Year Cumulative Pension Difference',color:'#357a9e',font:{size:10,weight:'bold'}}},
+        x:{grid:{display:false}}
+      }
+    },
+    plugins:[{id:'plbl',afterDatasetsDraw:function(chart){
+      var ctx=chart.ctx,meta=chart.getDatasetMeta(0),lp=meta.data[4],val=chart.data.datasets[0].data[4];
+      ctx.save();ctx.font='bold 11px Helvetica';ctx.fillStyle='#357a9e';ctx.textAlign='center';
+      ctx.fillText('+'+f(val),lp.x,lp.y-14);ctx.restore();
+    }}]
+  });
+
+  // Table
+  var rows='<tr><th>Year</th><th>Employee Pension</th><th>Employer Pension</th><th>Combined Pension</th></tr>';
+  pA.forEach(function(rA,i){
+    var rB=pB[i];
+    var dEmp=rB.cumEmp-rA.cumEmp, dEr=rB.cumEr-rA.cumEr, dComb=rB.cumCombined-rA.cumCombined;
+    rows+='<tr>'
+      +'<td>Year '+rA.year+'</td>'
+      +'<td class="'+(dEmp>=0?'dpos':'dneg')+'">'+(dEmp>=0?'+':'')+f(dEmp)+'</td>'
+      +'<td class="'+(dEr>=0?'dpos':'dneg')+'">'+(dEr>=0?'+':'')+f(dEr)+'</td>'
+      +'<td class="'+(dComb>=0?'dpos':'dneg')+'">'+(dComb>=0?'+':'')+f(dComb)+'</td></tr>';
+  });
+  document.getElementById('penTable').innerHTML=rows;
+
+  var cumPen5=pB[4].cumCombined-pA[4].cumCombined;
+  document.getElementById('pen5tile').innerHTML=
+    '<div class="t t-dark" style="text-align:center;padding:16px 14px">'
+    +'<div class="lbl" style="font-size:13px">5-Year Cumulative Pension Difference</div>'
+    +'<div class="val pos">+'+f(cumPen5)+'</div></div>';
+}
+
+
+function update(){
+  var bA=+document.getElementById('sliderA').value,bB=+document.getElementById('sliderB').value;
+  document.getElementById('valA').textContent='£'+bA.toLocaleString('en-GB');
+  document.getElementById('valB').textContent='£'+bB.toLocaleString('en-GB');
+  trackFill(document.getElementById('sliderA'));
+  trackFill(document.getElementById('sliderB'));
+  // Sync pay rise fields
+  var pr=document.getElementById('projRise'),pp=document.getElementById('projRisePen');
+  if(document.activeElement===pr) pp.value=pr.value;
+  else if(document.activeElement===pp) pr.value=pp.value;
+  sA=calc(bA,gv('carA'),gv('bonusA'),gv('empPenA'),gv('erPenA'),cs.salSacA,gv('sacrificeA'),cs.penSacA);
+  sB=calc(bB,gv('carB'),gv('bonusB'),gv('empPenB'),gv('erPenB'),cs.salSacB,gv('sacrificeB'),cs.penSacB);
+  renderBD('bdA','Current','badge-current',sA);
+  renderBD('bdB','Offered','badge-offered',sB);
+  renderDiff(sA,sB);renderPct(sA,sB);renderProj(sA,sB);renderPensionProj(sA,sB);
+}
+
+['sliderA','sliderB','carA','carB','bonusA','bonusB','empPenA','empPenB','erPenA','erPenB',
+ 'sacrificeA','sacrificeB','projRise','projRisePen','candName','curCompany','curTitle','newCompany','newTitle']
+.forEach(function(id){
+  var el=document.getElementById(id);
+  if(el){el.addEventListener('change',update);el.addEventListener('input',update);}
+});
+update();
+
+function showSummary(){
+  buildSummary();
+  document.getElementById('appView').style.display='none';
+  document.getElementById('summaryView').style.display='block';
+  window.scrollTo(0,0);
+}
+function hideSummary(){
+  document.getElementById('summaryView').style.display='none';
+  document.getElementById('appView').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function sumBD(d,title){
+  var isCur=title==='Current';
+  var cl=d.ss?'Sal. Sacrifice Car':'Car Allowance';
+  var tl=d.ss?'Income Tax (inc. BiK)':'Income Tax';
+  var carRow=d.ss&&d.carSaving?'<div class="sum-row"><span class="sum-rk">Car Scheme Tax &amp; NI Saving</span><span class="sum-rv" style="color:#2a9d5c">+ '+f(d.carSaving)+'</span></div>':'';
+  var penRow=d.penSac?'<div class="sum-row"><span class="sum-rk">Pension Tax &amp; NI Saving</span><span class="sum-rv" style="color:#2a9d5c">+ '+f(d.penSaving)+'</span></div>':'';
+  var sacNote=d.ss?'<div class="sac-note">Car provided via salary sacrifice. Take-home is lower than a cash car allowance equivalent, but the car is provided in exchange.</div>':'';
+  return '<div class="sum-col">'
+    +'<div class="col-badge '+(isCur?'badge-current':'badge-offered')+'" style="margin-bottom:12px">'+title+'</div>'
+    +'<div class="sum-row" style="background:#eef8fd;padding:5px 6px;border-radius:3px;border:none;margin:1px 0"><span class="sum-rk">Basic Salary</span><span class="sum-rv">'+f(d.basic)+'</span></div>'
+    +'<div class="sum-row"><span class="sum-rk">Bonus</span><span class="sum-rv">'+f(d.bonus)+'</span></div>'
+    +'<div class="sum-row"><span class="sum-rk">'+cl+'</span><span class="sum-rv">'+f(d.car)+'</span></div>'
+    +'<div class="sum-row"><span class="sum-rk">Employer Pension</span><span class="sum-rv">'+f(d.erPen)+'</span></div>'
+    +'<div class="sum-row" style="background:#cde8f5;padding:5px 6px;border-radius:3px;border:none;margin:1px 0"><span class="sum-rk" style="color:#064a69;font-size:10px;text-transform:uppercase">Total Package (Gross)</span><span class="sum-rv" style="color:#064a69">'+f(d.totalPkg)+'</span></div>'
+    +'<div class="sum-row" style="margin-top:6px"><span class="sum-rk">Employee Pension</span><span class="sum-rv">− '+f(d.empPen)+'</span></div>'
+    +'<div class="sum-row"><span class="sum-rk">'+tl+'</span><span class="sum-rv">− '+f(d.tax)+'</span></div>'
+    +'<div class="sum-row"><span class="sum-rk">National Insurance</span><span class="sum-rv">− '+f(d.ni)+'</span></div>'
+    +carRow+penRow
+    +'<div class="sum-row sum-total"><span class="sum-rk">Take-Home Pay (Net)</span><span class="sum-rv">'+f(d.takeHome)+'</span></div>'
+    +sacNote+'</div>';
+}
+
+function buildSummary(){
+  var name=document.getElementById('candName').value||'Candidate';
+  var curComp=document.getElementById('curCompany').value||'Current Company';
+  var curJob=document.getElementById('curTitle').value||'Current Role';
+  var newComp=document.getElementById('newCompany').value||'New Company';
+  var newJob=document.getElementById('newTitle').value||'New Role';
+  var a=sA,b=sB,rise=gv('projRise');
+  var nd=b.takeHome-a.takeHome,pd=b.totalPkg-a.totalPkg,td=(b.tax+b.ni)-(a.tax+a.ni);
+  var pb=((b.basic-a.basic)/a.basic)*100,pp=((b.totalPkg-a.totalPkg)/a.totalPkg)*100;
+  function fp(n){return (n>=0?'+':'−')+Math.abs(n).toFixed(1)+'%';}
+  var pA=getProj(a,rise,5),pB=getProj(b,rise,5),cum5=pB[4].cumTH-pA[4].cumTH;
+  var tRows='<tr style="background:#064a69">'
+    +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:left">Year</th>'
+    +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Current</th>'
+    +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Offered</th>'
+    +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Difference</th></tr>';
+  pA.forEach(function(rA,i){
+    var rB=pB[i],d=rB.th-rA.th;
+    tRows+='<tr style="border-bottom:1px solid #f0f4f7">'
+      +'<td style="padding:6px 8px;font-size:11px">Year '+rA.year+'</td>'
+      +'<td style="padding:6px 8px;font-size:11px;text-align:right;color:#357a9e;font-weight:700">'+f(rA.th)+'</td>'
+      +'<td style="padding:6px 8px;font-size:11px;text-align:right;font-weight:700">'+f(rB.th)+'</td>'
+      +'<td style="padding:6px 8px;font-size:11px;text-align:right;font-weight:700;color:'+(d>=0?'#2a9d5c':'#c0392b')+'">'+sign(d)+f(d)+'</td></tr>';
+  });
+  document.getElementById('summaryContent').innerHTML=
+    '<div class="sum-hero">'
+    +'<div class="sum-name">'+name+'</div>'
+    +'<div class="sum-sub">Salary Comparison — AR Resourcing</div>'
+    +'<div class="sum-narrative">A clear financial breakdown to help you evaluate this move.<br><br>'
+    +'Moving from <strong>'+curJob+'</strong> at <strong>'+curComp+'</strong> to <strong>'+newJob+'</strong> at <strong>'+newComp+'</strong> would '+(nd>=0?'increase':'decrease')+' your annual take-home pay by <strong>'+f(Math.abs(nd))+' per year</strong> — that\'s <strong>'+f(Math.abs(nd/12))+' '+(nd>=0?'more':'less')+' per month</strong>.<br><br>'
+    +'Over 5 years, based on a '+rise+'% annual pay rise, the cumulative difference in take-home pay is <strong>'+f(Math.abs(cum5))+'</strong>.</div></div>'
+    +'<div class="sum-proj"><div class="section-title" style="margin-bottom:12px">Breakdown</div><div class="sum-cols">'+sumBD(a,'Current')+sumBD(b,'Offered')+'</div></div>'
+    +'<div class="sum-proj"><div class="section-title" style="margin-bottom:14px">Take-Home Difference</div>'
+    +'<div style="display:grid;gap:18px">'
+    +'<div><div class="diff-col-header">Annual Difference</div>'+diffGrid(pd,nd,td)+'</div>'
+    +'<div><div class="diff-col-header">Monthly Difference</div>'+diffGrid(pd/12,nd/12,td/12)+'</div>'
+    +'</div></div>'
+    +'<div class="sum-proj"><div class="section-title" style="margin-bottom:14px">Percentage Difference</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">'
+    +tile('astral','Basic Salary',pb,fp(pb))+tile('astral','Total Package (Gross)',pp,fp(pp))+'<div></div></div></div>'
+    +(cs.showTakeHome?
+      '<div class="sum-proj" id="projSection"><div class="section-title" style="margin-bottom:12px">5-Year Cumulative Take-Home Difference</div>'
+      +'<div style="font-size:9px;color:#888;font-style:italic;margin-bottom:10px">Based on '+rise+'% annual pay rise applied to both offers.</div>'
+      +'<div style="position:relative;height:440px;margin-bottom:16px"><canvas id="summaryChart"></canvas></div>'
+      +'<table style="width:100%;border-collapse:collapse">'+tRows+'</table>'
+      +'<div style="margin-top:14px"><div class="t t-dark" style="text-align:center;padding:16px 14px">'
+      +'<div class="lbl" style="font-size:13px">5-Year Cumulative Take-Home Difference</div>'
+      +'<div class="val '+cls(cum5)+'">'+sign(cum5)+f(cum5)+'</div></div></div></div>'
+      :'<div id="projSection" style="display:none"></div>')
+    +(cs.showPension?
+      (function(){
+        var pPA=getPensionProj(a,rise,5),pPB=getPensionProj(b,rise,5);
+        var cumPen5=pPB[4].cumCombined-pPA[4].cumCombined;
+        var penRows='<tr style="background:#064a69">'
+          +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:left">Year</th>'
+          +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Employee Pension</th>'
+          +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Employer Pension</th>'
+          +'<th style="padding:6px 8px;color:#54b8ea;font-size:10px;text-align:right">Combined Pension</th></tr>';
+        pPA.forEach(function(rA,i){
+          var rB=pPB[i];
+          var dEmp=rB.cumEmp-rA.cumEmp,dEr=rB.cumEr-rA.cumEr,dComb=rB.cumCombined-rA.cumCombined;
+          penRows+='<tr style="border-bottom:1px solid #f0f4f7">'
+            +'<td style="padding:6px 8px;font-size:11px">Year '+rA.year+'</td>'
+            +'<td style="padding:6px 8px;font-size:11px;text-align:right;font-weight:700;color:'+(dEmp>=0?'#2a9d5c':'#c0392b')+'">'+(dEmp>=0?'+':'')+f(dEmp)+'</td>'
+            +'<td style="padding:6px 8px;font-size:11px;text-align:right;font-weight:700;color:'+(dEr>=0?'#2a9d5c':'#c0392b')+'">'+(dEr>=0?'+':'')+f(dEr)+'</td>'
+            +'<td style="padding:6px 8px;font-size:11px;text-align:right;font-weight:700;color:'+(dComb>=0?'#2a9d5c':'#c0392b')+'">'+(dComb>=0?'+':'')+f(dComb)+'</td></tr>';
+        });
+        return '<div class="sum-proj" id="penSection"><div class="section-title" style="margin-bottom:12px">5-Year Cumulative Pension Difference</div>'
+          +'<div style="font-size:9px;color:#888;font-style:italic;margin-bottom:10px">Based on '+rise+'% annual pay rise applied to both offers.</div>'
+          +'<div style="position:relative;height:440px;margin-bottom:16px"><canvas id="summaryPenChart"></canvas></div>'
+          +'<table style="width:100%;border-collapse:collapse">'+penRows+'</table>'
+          +'<div style="margin-top:14px"><div class="t t-dark" style="text-align:center;padding:16px 14px">'
+          +'<div class="lbl" style="font-size:13px">5-Year Cumulative Pension Difference</div>'
+          +'<div class="val pos">+'+f(cumPen5)+'</div></div></div></div>';
+      })()
+      :'');
+  setTimeout(function(){
+    if(cs.showTakeHome) sumChart=makeLineChart('summaryChart',pA,pB,sumChart);
+    if(cs.showPension){
+      var pPA=getPensionProj(a,rise,5),pPB=getPensionProj(b,rise,5);
+      if(window.sumPenChartObj) window.sumPenChartObj.destroy();
+      var pdiff=pPA.map(function(r,i){return pPB[i].cumCombined-r.cumCombined;});
+      window.sumPenChartObj=new Chart(document.getElementById('summaryPenChart'),{
+        type:'line',
+        data:{labels:pPA.map(function(r){return 'Year '+r.year;}),datasets:[{
+          label:'Cumulative Pension Difference',data:pdiff,
+          borderColor:'#357a9e',backgroundColor:'rgba(53,122,158,0.12)',
+          borderWidth:2.5,pointBackgroundColor:'#064a69',pointBorderColor:'#357a9e',
+          pointRadius:6,fill:true,tension:0.4
+        }]},
+        options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},
+          plugins:{legend:{display:false}},
+          scales:{y:{ticks:{callback:function(v){return '£'+Math.round(v/1000)+'k';}},grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}
+        },
+        plugins:[{id:'plbl2',afterDatasetsDraw:function(chart){
+          var ctx=chart.ctx,meta=chart.getDatasetMeta(0),lp=meta.data[4],val=chart.data.datasets[0].data[4];
+          ctx.save();ctx.font='bold 11px Helvetica';ctx.fillStyle='#357a9e';ctx.textAlign='center';
+          ctx.fillText('+'+f(val),lp.x,lp.y-14);ctx.restore();
+        }}]
+      });
+    }
+  },50);
+}
+
+function buildEmailContent(){
+  var name=document.getElementById('candName').value||'Candidate';
+  var firstName=name.trim().split(' ')[0];
+  var curComp=document.getElementById('curCompany').value||'Current Company';
+  var curJob=document.getElementById('curTitle').value||'Current Role';
+  var newComp=document.getElementById('newCompany').value||'New Company';
+  var newJob=document.getElementById('newTitle').value||'New Role';
+  var a=sA,b=sB,rise=gv('projRise');
+  var nd=b.takeHome-a.takeHome,pd=b.totalPkg-a.totalPkg,td=(b.tax+b.ni)-(a.tax+a.ni);
+  var pb=((b.basic-a.basic)/a.basic)*100,pp=((b.totalPkg-a.totalPkg)/a.totalPkg)*100;
+  var pA=getProj(a,rise,5),pB=getProj(b,rise,5),cum5=pB[4].cumTH-pA[4].cumTH;
+  var highestPct=pp>pb?pp:pb;
+  var highestLabel=pp>pb?'total package':'basic salary';
+  function fp(n){return Math.abs(n).toFixed(1)+'%';}
+  return{
+    subject:'Salary Comparison for '+name,
+    firstName:firstName,
+    curComp:curComp,curJob:curJob,newComp:newComp,newJob:newJob,
+    pctLabel:highestLabel,pct:fp(highestPct),
+    curPkg:f(a.totalPkg),offPkg:f(b.totalPkg),
+    curNet:f(a.takeHome),offNet:f(b.takeHome),
+    annualDiff:f(Math.abs(nd)),monthlyDiff:f(Math.abs(nd/12)),
+    taxExtra:f(Math.abs(td)),
+    cum5:f(Math.abs(cum5)),
+    rise:rise
+  };
+}
+
+function showEmailModal(){
+  var d=buildEmailContent();
+  document.getElementById('emailSubject').textContent=d.subject;
+  document.getElementById('emailBody').innerHTML=
+    '<p>Hi '+d.firstName+',</p>'
+    +'<p style="margin-top:12px">Please find attached a financial breakdown to help you evaluate this move.</p>'
+    +'<p style="margin-top:12px">The document sets out a clear comparison of your current and offered remuneration packages, including take-home pay, tax and NI, and a 5-year projection.</p>'
+    +'<p style="margin-top:12px">Key figures at a glance:</p>'
+    +'<ul style="margin-top:8px;padding-left:20px">'
+    +'<li style="margin-bottom:8px"><strong>This move represents a +'+d.pct+' '+d.pctLabel+' increase (gross):</strong> '+d.curPkg+' current vs '+d.offPkg+' offered, resulting in take-home pay (net) of '+d.curNet+' currently vs '+d.offNet+' offered</li>'
+    +'<li style="margin-bottom:8px"><strong>The take-home difference is +'+d.annualDiff+' per year — that\'s +'+d.monthlyDiff+' per month</strong></li>'
+    +'<li style="margin-bottom:8px">As a result of the salary increase, you will pay an additional '+d.taxExtra+' in tax and NI annually</li>'
+    +'<li style="margin-bottom:8px">Over 5 years (based on a '+d.rise+'% annual pay rise applied to both), making this move will result in an additional cumulative take-home difference of +'+d.cum5+' compared to staying in your current role</li>'
+    +'</ul>'
+    +'<p style="margin-top:12px">I hope you find this evaluation useful. Please do get in touch should you wish to talk through any of the figures.</p>'
+    +'<p style="margin-top:12px">This comparison is for illustration purposes only. Figures are based on 2026/27 Income Tax and NI rates. Assumptions have been made regarding salary sacrifice arrangements, pension contributions, and future pay growth — full details are included on the second page of the attached document.</p>';
+  document.getElementById('emailModal').style.display='block';
+}
+
+function closeEmailModal(){
+  document.getElementById('emailModal').style.display='none';
+}
+
+function copySubject(){
+  var el=document.getElementById('emailSubject');
+  var range=document.createRange();
+  range.selectNodeContents(el);
+  var sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('copy');
+  sel.removeAllRanges();
+  var confirm=document.getElementById('copySubjectConfirm');
+  confirm.style.opacity='1';
+  setTimeout(function(){confirm.style.opacity='0';},2500);
+}
+
+function copyEmailBody(){
+  var body=document.getElementById('emailBody');
+  var range=document.createRange();
+  range.selectNodeContents(body);
+  var sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('copy');
+  sel.removeAllRanges();
+  var confirm=document.getElementById('copyConfirm');
+  confirm.style.opacity='1';
+  setTimeout(function(){confirm.style.opacity='0';},2500);
+}
+
+async function generateSummaryPDF(){
+  var btn=document.getElementById('sumPdfBtn');
+  btn.disabled=true;btn.textContent='Generating…';
+  try{
+    var jsPDF=window.jspdf.jsPDF;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    var margin=10,usableW=pw-margin*2;
+
+    function pdfHeader(){
+      pdf.setFillColor(6,74,105);pdf.rect(0,0,pw,14,'F');
+      pdf.setTextColor(255,255,255);pdf.setFontSize(13);pdf.setFont('helvetica','normal');
+      pdf.text('Candidate Summary',margin,9);
+      pdf.setTextColor(84,184,234);pdf.setFontSize(10);
+      pdf.text('AR RESOURCING',pw-margin,9,{align:'right'});
+    }
+    pdfHeader();
+    var y=18;
+
+    // Page 1 — hide projection sections, capture rest
+    var projSection=document.getElementById('projSection');
+    var penSection=document.getElementById('penSection');
+    if(projSection) projSection.style.display='none';
+    if(penSection) penSection.style.display='none';
+    var c1=await html2canvas(document.getElementById('summaryContent'),{scale:2,useCORS:true,backgroundColor:'#f2f2f2'});
+    if(projSection) projSection.style.display='';
+    if(penSection) penSection.style.display='';
+
+    var imgH1=(c1.height/c1.width)*usableW;
+    if(imgH1<=(ph-y-10)){
+      pdf.addImage(c1.toDataURL('image/jpeg',0.95),'JPEG',margin,y,usableW,imgH1);
+      y+=imgH1+4;
+    } else {
+      var ratio=usableW/c1.width,srcPageH=(ph-y-10)/ratio,srcY=0,first=true;
+      while(srcY<c1.height){
+        if(!first){pdf.addPage();pdfHeader();y=18;}
+        var sliceH=Math.min(srcPageH,c1.height-srcY);
+        var sc=document.createElement('canvas');sc.width=c1.width;sc.height=sliceH;
+        sc.getContext('2d').drawImage(c1,0,srcY,c1.width,sliceH,0,0,c1.width,sliceH);
+        pdf.addImage(sc.toDataURL('image/jpeg',0.95),'JPEG',margin,y,usableW,sliceH*ratio);
+        srcY+=sliceH;y+=sliceH*ratio+2;first=false;
+      }
+    }
+
+    // Take-home projection section
+    if(projSection && cs.showTakeHome){
+      var c2=await html2canvas(projSection,{scale:2,useCORS:true,backgroundColor:'#f2f2f2'});
+      var imgH2=(c2.height/c2.width)*usableW;
+      if(y+imgH2>(ph-40)){pdf.addPage();pdfHeader();y=18;}
+      pdf.addImage(c2.toDataURL('image/jpeg',0.95),'JPEG',margin,y,usableW,Math.min(imgH2,ph-y-40));
+      y+=Math.min(imgH2,ph-y-40)+8;
+    }
+
+    // Pension projection section
+    if(penSection && cs.showPension){
+      var c3=await html2canvas(penSection,{scale:2,useCORS:true,backgroundColor:'#f2f2f2'});
+      var imgH3=(c3.height/c3.width)*usableW;
+      if(y+imgH3>(ph-40)){pdf.addPage();pdfHeader();y=18;}
+      pdf.addImage(c3.toDataURL('image/jpeg',0.95),'JPEG',margin,y,usableW,Math.min(imgH3,ph-y-40));
+      y+=Math.min(imgH3,ph-y-40)+8;
+    }
+
+    // Footer text
+    pdf.setFontSize(9);pdf.setTextColor(100,100,100);pdf.setFont('helvetica','italic');
+    var ftxt='Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.\n\n'
+      +'Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.\n\n'
+      +'Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.\n\n'
+      +'Note for higher rate taxpayers: If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.';
+    pdf.text(pdf.splitTextToSize(ftxt,usableW),margin,y);
+
+    var name=document.getElementById('candName').value||'Candidate';
+    pdf.save('Salary_Comparison_'+name.trim().replace(/\s+/g,'_')+'.pdf');
+  }catch(e){console.error(e);alert('PDF failed: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='↓ Download PDF';}
+}
+</script>
+</body>
+</html>
