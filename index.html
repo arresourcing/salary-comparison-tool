@@ -94,7 +94,7 @@ footer{text-align:center;font-size:12px;color:#555;font-style:italic;padding:10p
 <!-- MAIN APP -->
 <div id="appView">
 <header>
-  <div class="hdr-left">Salary Comparison</div>
+  <div class="hdr-left">Salary Comparison App</div>
   <div class="hdr-right">AR Resourcing</div>
 </header>
 <div class="container">
@@ -195,7 +195,7 @@ footer{text-align:center;font-size:12px;color:#555;font-style:italic;padding:10p
 <div class="btn-row">
   <button class="btn btn-mid" onclick="showSummary()">&#128203; Candidate Summary</button>
 </div>
-<footer>Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
+<footer>Salary Comparison App uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
 Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.<br><br>
 Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.<br><br>
 <strong>Note for higher rate taxpayers:</strong> If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.</footer>
@@ -203,14 +203,14 @@ Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI 
 
 <!-- SUMMARY VIEW -->
 <div id="summaryView">
-<header><div class="hdr-left">Salary Comparison</div><div class="hdr-right">AR Resourcing</div></header>
+<header><div class="hdr-left">Salary Comparison App</div><div class="hdr-right">AR Resourcing</div></header>
 <div class="sum-container" id="summaryContent"></div>
 <div class="btn-row" style="padding-bottom:24px">
   <button class="btn btn-dark" onclick="hideSummary()">&#8592; Back to Comparison</button>
   <button class="btn btn-mid" id="sumPdfBtn" onclick="generateSummaryPDF()">&#8595; Download PDF</button>
   <button class="btn btn-mid" onclick="showEmailModal()">&#9993; Create Email</button>
 </div>
-<footer>Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
+<footer>Salary Comparison App uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.<br><br>
 Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.<br><br>
 Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.<br><br>
 <strong>Note for higher rate taxpayers:</strong> If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.</footer>
@@ -787,7 +787,7 @@ async function generateSummaryPDF(){
 
     // Footer text
     pdf.setFontSize(9);pdf.setTextColor(100,100,100);pdf.setFont('helvetica','italic');
-    var ftxt='Salary Comparison app uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.\n\n'
+    var ftxt='Salary Comparison App uses Income Tax and NI rates from 6 April 2026 to 5 April 2027. For illustration purposes only.\n\n'
       +'Car Scheme Salary Sacrifice: assumes a £40,000 EV at 4% BiK (2026/27 rate) — the car is provided by your employer in exchange for a reduced gross salary, saving Income Tax and NI on the sacrificed amount, with only a small BiK charge applied instead. Replaces cash car allowance.\n\n'
       +'Pension Salary Sacrifice: the saving shown reflects the total Income Tax and NI benefit of making pension contributions via salary sacrifice — comparing take-home with the pension contribution versus receiving the same amount as taxable salary with no pension.\n\n'
       +'Note for higher rate taxpayers: If your salary falls between £100,000 and £125,140, your Personal Allowance reduces gradually to zero — creating an effective 60% marginal tax rate on earnings in this range. Pension salary sacrifice can be an effective way to reduce income back below £100,000 and recover your full allowance.';
